@@ -3,9 +3,10 @@
 SHELL := /bin/bash
 
 # Configuration (using environment variables or arguments passed to make)
-DATA_DIR?=~/jsglr2evaluation-data
+RP_DIR?=$(shell pwd)/../..
+DATA_DIR?=$(RP_DIR)/jsglr2evaluation-data
 FIGURES_DIR?=$(DATA_DIR)/figures
-SPOOFAX_DIR?=~/spoofax/releng
+SPOOFAX_DIR?=$(RP_DIR)/spoofax
 DEV?=false
 
 # Shorthands
@@ -71,8 +72,12 @@ benchmarks: $(BENCHMARKS_JAR)
 benchmarksBatchSampled: $(BENCHMARKS_JAR)
 	amm benchmarksBatchSampled.sc
 
-$(BENCHMARKS_JAR): $(TREE_SITTER_JAR) $(JSGLR_DIR)/org.spoofax.jsglr2.benchmark/src
+$(BENCHMARKS_JAR): $(TREE_SITTER_JAR) grabOcamlFuse $(JSGLR_DIR)/org.spoofax.jsglr2.benchmark/src
 	mvn -f $(JSGLR_DIR)/org.spoofax.jsglr2.benchmark -q install
+
+# grab ocaml-fuse for the benchmark&/integration tests
+grabOcamlFuse:
+	if [ ! -d $(DATA_DIR)/tools/ocamlfuse/.git ]; then git clone https://github.com/astrada/google-drive-ocamlfuse $(DATA_DIR)/tools/ocamlfuse; fi
 
 # Pull custom java-tree-sitter library from https://github.com/mpsijm/java-tree-sitter
 $(TREE_SITTER_JAR):
@@ -87,6 +92,7 @@ cleanBenchmarks:
 	-rm -r $(DATA_DIR)/benchmarks
 	-rm -r $(JSGLR_DIR)/org.spoofax.jsglr2.benchmarks/target
 	-rm -rf $(DATA_DIR)/tools/java-tree-sitter
+	-rm -rf $(DATA_DIR)/tools/ocamlfuse
 
 
 # Performs memory benchmarks

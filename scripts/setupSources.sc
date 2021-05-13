@@ -22,7 +22,7 @@ suite.languages.foreach { language =>
         %%("git", "config", "core.sparseCheckout", "true")(languageSourceRepoDir)
         write(languageSourceRepoDir / ".git" / "info" / "sparse-checkout", source match {
             // If a list of files is given: only checkout these files
-            case IncrementalSource(_, _, _, _, files, _) if files.nonEmpty => files.mkString("\n")
+            case IncrementalSource(_, _, _, _, files, _, _) if files.nonEmpty => files.mkString("\n")
             // Else: filter files based on extension
             case _ => "*." + language.extension
         })
@@ -30,15 +30,15 @@ suite.languages.foreach { language =>
         %%("git", "remote", "add", "origin", source.repo)(languageSourceRepoDir)
 
         source match {
-            case BatchRepoSource(_, repo, _) =>
+            case BatchRepoSource(_, repo, _, branch) =>
                 // Clone without all history
-                %%("git", "fetch", "origin", "master", "--depth=1")(languageSourceRepoDir)
-            case IncrementalSource(_, repo, _, fetchOptions, _, _) =>
+                %%("git", "fetch", "origin", branch, "--depth=1")(languageSourceRepoDir)
+            case IncrementalSource(_, repo, _, fetchOptions, _, _, branch) =>
                 // Clone with full history, possibly limited by the fetchOptions
-                %%("git", "fetch", "origin", "master", fetchOptions)(languageSourceRepoDir)
+                %%("git", "fetch", "origin", branch, fetchOptions)(languageSourceRepoDir)
         }
 
-        %%("git", "checkout", "master")(languageSourceRepoDir)
+        %%("git", "checkout", source.branch)(languageSourceRepoDir)
     }
 
     language.sources.batch.foreach { source =>

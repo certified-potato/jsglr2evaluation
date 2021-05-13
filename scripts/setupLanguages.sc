@@ -25,7 +25,7 @@ suite.languages.foreach { language =>
     
             timed("build " + language.id) {
                 println(s"  Building ${gitSpoofax.spoofaxProjectDir(language)}...")
-                %%("mvn", "install", MAVEN_OPTS="-Xmx8G -Xss64M")(gitSpoofax.spoofaxProjectDir(language))
+                %%("mvn", "install", "-B", "-q", MAVEN_OPTS="-Xmx8G -Xss64M")(gitSpoofax.spoofaxProjectDir(language))
             }
         case LocalParseTable(_) =>
     }

@@ -21,7 +21,7 @@ make all
 Specify Spoofax location with `SPOOFAX_DIR`:
 
 ```
-make SPOOFAX_DIR=~/spoofax/releng all
+make SPOOFAX_DIR=~/spoofax all
 ```
 
 Specify working directory for languages, sources, measurements, results, etc., with `DATA_DIR` (defaults to `~/jsglr2evaluation-data`):
@@ -41,3 +41,4 @@ During development, automatically regenerate the website at path `/dev` when `ad
 ```
 make DEV=true addToWebsiteWatch
 ```
+
