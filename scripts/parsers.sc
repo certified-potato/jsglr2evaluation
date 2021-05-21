@@ -142,6 +142,7 @@ object Parser {
         case "recovery"            => JSGLR2Parser(language, "recovery", recoveryJSGLR2, false)
         case "recoveryElkhound"    => JSGLR2Parser(language, "recoveryElkhound", recoveryElkhoundJSGLR2, false)
         case "recoveryIncremental" => JSGLR2Parser(language, JSGLR2Variant.Preset.recoveryIncremental, true)
+        case "recoveryInlined"     => JSGLR2Parser(language, JSGLR2Variant.Preset.recoveryIncremental, false)
     })
 
     def variants(language: Language)(implicit suite: Suite): Seq[Parser] =

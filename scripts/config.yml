@@ -1,7 +1,12 @@
-warmupIterations: 1
-benchmarkIterations: 1
+warmupIterations: 10
+benchmarkIterations: 10
 shrinkBatchSources: 3
-batchSamples: 1
+batchSamples: 10
+individualBatchSources: false
+variants:
+  - recovery
+  - standard
+  - recoveryInlined
 languages:
   - id: java
     name: Java
@@ -18,7 +23,7 @@ languages:
         - id: spring-boot
           repo: https://github.com/spring-projects/spring-boot.git
           branch: main
-      incremental:
+#      incremental:
 #        - id: apache-commons-lang-incremental
 #          repo: https://github.com/apache/commons-lang.git
 #          fetchOptions:
@@ -60,17 +65,17 @@ languages:
           repo: https://github.com/webdsl/elib-timezones
         - id: webdsl-elib-holder
           repo: https://github.com/webdsl/elib-holder
-      incremental:
-        - id: webdsl-yellowgrass-incremental
-          repo: https://github.com/webdsl/yellowgrass
-          fetchOptions:
-            - '--depth=200'
-        - id: webdsl-builtin
-          repo: https://github.com/webdsl/webdsl
-          fetchOptions:
-            - '--shallow-since="2011-02-16 14:00:00 +0000"' # From this point in time on, the file parses without errors
-          files:
-            - src/org/webdsl/dsl/project/template-webdsl/built-in.app
+#      incremental:
+#        - id: webdsl-yellowgrass-incremental
+#          repo: https://github.com/webdsl/yellowgrass
+#          fetchOptions:
+#            - '--depth=200'
+#        - id: webdsl-builtin
+#          repo: https://github.com/webdsl/webdsl
+#          fetchOptions:
+#            - '--shallow-since="2011-02-16 14:00:00 +0000"' # From this point in time on, the file parses without errors
+#          files:
+#            - src/org/webdsl/dsl/project/template-webdsl/built-in.app
   - id: sdf3
     name: SDF3
     extension: sdf3
@@ -85,14 +90,14 @@ languages:
           repo: https://github.com/metaborg/dynsem
         - id: flowspec
           repo: https://github.com/metaborg/flowspec
-  - id: ocaml
-    name: OCaml
-    extension: ml
-    parseTable:
-      repo: https://github.com/MetaBorgCube/metaborg-ocaml.git
-      subDir: ocaml
-      dynamic: true
-    sources:
-      batch:
-        - id: facebook-flow
-          repo: https://github.com/facebook/flow.git
+#  - id: ocaml
+#    name: OCaml
+#    extension: ml
+#    parseTable:
+#      repo: https://github.com/MetaBorgCube/metaborg-ocaml.git
+#      subDir: ocaml
+#      dynamic: true
+#    sources:
+#      batch:
+#        - id: facebook-flow
+#          repo: https://github.com/facebook/flow.git

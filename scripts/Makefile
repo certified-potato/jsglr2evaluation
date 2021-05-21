@@ -23,9 +23,9 @@ export JSGLR2EVALUATION_FIGURES_DIR=$(FIGURES_DIR)
 export JSGLR2EVALUATION_DEV=$(DEV)
 
 
-all: languages sources preProcessing measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures publish
+all: languages sources preProcessing measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures
 
-repeat: cleanMeasurements cleanBenchmarks measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures publish
+repeat: cleanMeasurements cleanBenchmarks measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures
 
 clean: cleanLanguages cleanSources cleanMeasurements cleanBenchmarks cleanMemoryBenchmarks cleanPostProcessing cleanFigures cleanArchive
 
