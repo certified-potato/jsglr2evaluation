@@ -20,7 +20,7 @@ case class Config(
     shrinkBatchSources: Option[Int] = None,
     individualBatchSources: Boolean = true,
     implode: Option[Boolean],
-    variants: Seq[String] = Seq("standard", "elkhound", "recovery", "incremental", "jsglr1"),
+    variants: Seq[String] = Seq("recovery", "recoveryInlined", "jsglr1"),
     //variants: Seq[String] = Seq("standard", "elkhound", "recovery", "recoveryElkhound", "incremental", "recoveryIncremental", "jsglr1"),
     languages: Seq[Language],
 )
@@ -44,7 +44,7 @@ case class Language(id: String, name: String, extension: String, parseTable: Par
     
     def measurementsDir(implicit suite: Suite) = suite.measurementsDir / id
 
-    def measurementsBatch(source: Option[BatchSource], variant: String = "standard")(implicit suite: Suite) = {
+    def measurementsBatch(source: Option[BatchSource], variant: String)(implicit suite: Suite) = {
         val measurementsCSV = (source match {
             case None         => measurementsDir / "batch"
             case Some(source) => measurementsDir / "batch" / source.id

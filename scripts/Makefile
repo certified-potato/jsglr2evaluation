@@ -23,14 +23,21 @@ export JSGLR2EVALUATION_FIGURES_DIR=$(FIGURES_DIR)
 export JSGLR2EVALUATION_DEV=$(DEV)
 
 
-all: languages sources preProcessing measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures
+all: languages sources preProcessing setupJars measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures
 
-repeat: cleanMeasurements cleanBenchmarks measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures
+repeat: setupJars cleanMeasurements cleanBenchmarks measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures
 
 clean: cleanLanguages cleanSources cleanMeasurements cleanBenchmarks cleanMemoryBenchmarks cleanPostProcessing cleanFigures cleanArchive
 
 cleanAll: clean all
 
+
+# grab the jars of JGLR2
+setupJars:
+	cd $(JSGLR_DIR)/org.spoofax.jsglr && mvn install && cd .. && \
+	cd org.spoofax.jsglr2 && mvn install && cd .. && \
+	cd org.spoofax.jsglr2.integrationtest && mvn install && cd .. &&\
+	cd org.spoofax.jsglr2.measure && mvn install
 
 # Pull Spoofax languages from GitHub and build them
 languages:
@@ -119,7 +126,7 @@ cleanPostProcessing:
 	-rm -r $(DATA_DIR)/results
 
 
-figures: latexTables batchPlots .venv incrementalPlots
+figures: latexTables batchPlots
 
 # Generate LaTeX tables (batch)
 latexTables:

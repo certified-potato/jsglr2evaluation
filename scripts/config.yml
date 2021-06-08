@@ -3,9 +3,9 @@ benchmarkIterations: 10
 shrinkBatchSources: 3
 batchSamples: 10
 individualBatchSources: false
-variants:
+variants:   
+#  - standard
   - recovery
-  - standard
   - recoveryInlined
 languages:
   - id: java

@@ -3,15 +3,11 @@ import $ivy.`com.lihaoyi::ammonite-ops:2.2.0`, ammonite.ops._
 import $file.spoofaxDeps
 
 import $ivy.`org.metaborg:org.spoofax.jsglr2:2.6.0-SNAPSHOT`
-
-import org.spoofax.jsglr2.incremental.EditorUpdate
-import org.spoofax.jsglr2.incremental.diff.{IStringDiff,JGitHistogramDiff}
+import $file.parsers, parsers._
 
 import scala.collection.JavaConverters._
 
 import $file.common, common._, Suite._
-
-val diff: IStringDiff = new JGitHistogramDiff();
 
 println("Processing results...")
 
@@ -77,6 +73,7 @@ suite.languages.foreach { language =>
 
         write.append(parseTableMeasurementsPath, "\n" + language.id + "," + read.lines(language.measurementsDir / "batch" / "parsetable.csv")(1))
         write.append(parsingMeasurementsPath, "\n" + language.id + "," + read.lines(language.measurementsDir / "batch" / "parsing.csv")(1))
+        write.append(parsingMeasurementsPath, "\n" + language.id + "," + read.lines(language.measurementsDir / "batch" / "parsing.csv")(2))
 
         // Benchmarks (batch)
         def processBenchmarkCSV(benchmarkCSV: CSV, variant: CSVRow => String, destinationPath: Path, destinationPathNormalized: Path, normalize: BigDecimal => BigDecimal, append: String = "") = {
@@ -114,28 +111,27 @@ suite.languages.foreach { language =>
                     )
                 )
             }
+                val measurements = language.measurementsBatch(source, "recovery")
+                val characters = BigDecimal(measurements("characters"))
+                val normalize: BigDecimal => BigDecimal = score => characters / score
 
-            val measurements = language.measurementsBatch(source)
-            val characters = BigDecimal(measurements("characters"))
-            val normalize: BigDecimal => BigDecimal = score => characters / score
+                resultsDirs.foreach { resultsDir =>
+                    processBenchmarkCSV(CSV.parse(benchmarksDir / "jsglr2.csv"), row => row("Param: variant"), resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
 
-            resultsDirs.foreach { resultsDir =>
-                processBenchmarkCSV(CSV.parse(benchmarksDir / "jsglr2.csv"), row => row("Param: variant"), resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
-
-                if (suite.variants.contains("jsglr1")) {
-                    processBenchmarkCSV(CSV.parse(benchmarksDir / "jsglr1.csv"), _ => "jsglr1", resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
-                }
-
-                if (comparison == External) {
-                    language.antlrBenchmarks.foreach { antlrBenchmark =>
-                        processBenchmarkCSV(CSV.parse(benchmarksDir / s"${antlrBenchmark.id}.csv"), _ => antlrBenchmark.id, resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
+                    if (suite.variants.contains("jsglr1")) {
+                        processBenchmarkCSV(CSV.parse(benchmarksDir / "jsglr1.csv"), _ => "jsglr1", resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
                     }
 
-                    if (language.extension == "java") {
-                        processBenchmarkCSV(CSV.parse(benchmarksDir / "tree-sitter.csv"), _ => "tree-sitter", resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
+                    if (comparison == External) {
+                        language.antlrBenchmarks.foreach { antlrBenchmark =>
+                            processBenchmarkCSV(CSV.parse(benchmarksDir / s"${antlrBenchmark.id}.csv"), _ => antlrBenchmark.id, resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
+                        }
+
+                        if (language.extension == "java") {
+                            processBenchmarkCSV(CSV.parse(benchmarksDir / "tree-sitter.csv"), _ => "tree-sitter", resultsDir / "time.csv", resultsDir / "throughput.csv", normalize)
+                        }
                     }
                 }
-            }
         }
 
         Seq(
@@ -163,73 +159,5 @@ suite.languages.foreach { language =>
             }
         }
     }
-
-    // Benchmarks (incremental)
-
-    val parserTypes = Seq("Batch", "Incremental", "IncrementalNoCache")
-    language.sources.incremental.foreach { source => {
-        Map(false -> "parse", true -> "parse+implode").foreach { case (implode, parseImplodeStr) =>
-            mkdir! incrementalResultsDir / language.id
-            val resultPath = incrementalResultsDir / language.id / s"${source.id}-${parseImplodeStr}.csv"
-
-            // CSV header
-            write.over(resultPath, """"i"""")
-            parserTypes.foreach { parserType =>
-                write.append(resultPath, s""","$parserType","$parserType Error (99.9%)"""")
-            }
-            parserTypes.filter(_ != "Batch").foreach { parserType =>
-                write.append(resultPath, s""","TreeSitter$parserType","TreeSitter$parserType Error (99.9%)"""")
-            }
-            write.append(resultPath, ""","Size (bytes)","Removed","Added","Changes"""" + "\n")
-
-            val sourceDir = language.sourcesDir / "incremental" / source.id
-            for (i <- 0 until (ls! sourceDir).length) {
-                val csvJSGLR2 = try {
-                    CSV.parse(language.benchmarksDir / "jsglr2incremental" / source.id / s"$i.csv")
-                } catch {
-                    case _ => CSV(Seq.empty, Seq.empty)
-                }
-                val csvTreeSitter = try {
-                    CSV.parse(language.benchmarksDir / "tree-sitter-incremental" / source.id / s"$i.csv")
-                } catch {
-                    case _ => CSV(Seq.empty, Seq.empty)
-                }
-
-                val rowsJSGLR2 = csvJSGLR2.rows.filter(_("Param: implode") == implode.toString)
-                val rowsTreeSitter = if (implode) csvTreeSitter.rows else Nil
-
-                write.append(resultPath, i.toString)
-
-                parserTypes.foreach { parserType =>
-                    write.append(resultPath, rowsJSGLR2.find(_("Param: parserType") == parserType) match {
-                        case Some(row) => "," + row("Score") + "," + row("Score Error (99.9%)").replace("NaN", "")
-                        case None => ",,"
-                    })
-                }
-
-                parserTypes.filter(_ != "Batch").foreach { parserType =>
-                    write.append(resultPath, rowsTreeSitter.find(_("Param: parserType") == parserType) match {
-                        case Some(row) => "," + row("Score") + "," + row("Score Error (99.9%)").replace("NaN", "")
-                        case None => ",,"
-                    })
-                }
-
-                val totalSize = ((ls! sourceDir / s"$i") | stat | (_.size)).sum
-                write.append(resultPath, "," + totalSize)
-
-                val diffs: Seq[java.util.List[EditorUpdate]] = (ls! sourceDir / s"$i").map(file => diff.diff(
-                    try {
-                        read! file / up / up / s"${i-1}" / file.last
-                    } catch {
-                        case _ => "" // This case is reached when i == 0 or when a file is new in this iteration
-                    },
-                    read! file)
-                )
-                val deleted = diffs.map(diff => diff.asScala.map(_.deletedLength).sum).sum
-                val inserted = diffs.map(diff => diff.asScala.map(_.insertedLength).sum).sum
-                val numChanges = diffs.map(diff => diff.size).sum
-                write.append(resultPath, s",${deleted},${inserted},${numChanges}\n")
-            }
-        }
-    }}
+    
 }
