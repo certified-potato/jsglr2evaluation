@@ -157,6 +157,9 @@ archive:
 cleanArchive:
 	-rm $(DATA_DIR)/archive.tar.gz
 
+mail: archive
+	amm mail.sc
+
 websiteRepo:
 	if [ ! -d $(DATA_DIR)/website/.git ]; then git clone https://$(GITHUB_TOKEN)@github.com/metaborg/jsglr2evaluation-site.git $(DATA_DIR)/website; fi
 	cd $(DATA_DIR)/website && git pull --rebase

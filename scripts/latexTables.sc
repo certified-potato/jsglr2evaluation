@@ -1,7 +1,6 @@
 import $ivy.`com.lihaoyi::ammonite-ops:2.2.0`, ammonite.ops._
 
 import $file.common, common._, Suite._
-import $file.spoofax, spoofax._
 
 println("LateX reporting...")
 
@@ -195,10 +194,15 @@ def latexTableBenchmarks(benchmarksCSV: CSV, benchmarkType: BenchmarkType)(impli
 mkdir! suite.figuresDir
 
 write.over(suite.figuresDir / "testsets.tex", latexTableTestSets)
+//write.over(suite.figuresDir / "testsets-incremental.tex", latexTableTestSetsIncremental)
 
 if (inScope("batch")) {
+    //write.over(suite.figuresDir / "parseforest.tex", latexTableParseForest)
+    //write.over(suite.figuresDir / "determinism.tex", latexTableDeterminism)
+
     write.over(suite.figuresDir / "measurements-parsetables.tex", latexTableMeasurementsBatch(CSV.parse(parseTableMeasurementsPath)))
     write.over(suite.figuresDir / "measurements-parsing.tex",     latexTableMeasurementsBatch(CSV.parse(parsingMeasurementsPath)))
+
     Seq(
         InternalParse,
         Internal,
@@ -207,4 +211,103 @@ if (inScope("batch")) {
         write.over(suite.figuresDir / s"benchmarks-${comparison.dir}-time.tex",          latexTableBenchmarks(CSV.parse(batchResultsDir / comparison.dir / "time.csv"),       Time))
         write.over(suite.figuresDir / s"benchmarks-${comparison.dir}-throughput.tex",    latexTableBenchmarks(CSV.parse(batchResultsDir / comparison.dir / "throughput.csv"), Throughput))
     }
+}
+
+if (inScope("incremental")) {
+    import IncrementalMeasurementsTableUtils._
+
+    val languagesWithIncrementalSources = suite.languages.filter(_.sources.incremental.nonEmpty)
+
+    mkdir! suite.figuresDir / "incremental"
+    languagesWithIncrementalSources.foreach { language =>
+        mkdir! suite.figuresDir / "incremental" / language.id
+        language.sources.incremental.foreach { source =>
+            mkdir! suite.figuresDir / "incremental" / language.id / s"${source.id}-parse"
+
+            val (rows, percs, skewRows, skewPercs, avgs, avgPercs, skewAvgs, skewAvgPercs) = language.measurementsIncremental(Some(source))
+            val n = rows.length
+
+            val ids = rows.map(_("version").toString)
+            val skewIds = s"~~ \\textrightarrow\\ ${rows(0)("version")}" +:
+                rows.drop(1).map(_("version")).map(i => s"${"~" * (i.toString.length - (i - 1).toString.length) * 2}${i - 1} \\textrightarrow\\ ${i}")
+
+            val avgsLabel = s"\\makecell{Average\\\\(${ids(0)}..${ids.last.toInt - 1})}"
+            val skewAvgsLabel = s"\\makecell{Average\\\\(${ids(1)}..${ids.last})}"
+
+
+            write.over(
+                suite.figuresDir / "incremental" / language.id / s"${source.id}-parse" / "measurements-parsing-incremental.tex",
+                createMeasurementsTable("Version", ids, rows, percs, avgsLabel, avgs, avgPercs))
+            write.over(
+                suite.figuresDir / "incremental" / language.id / s"${source.id}-parse" / "measurements-parsing-incremental-skew.tex",
+                createMeasurementsTableSkew("Version", skewIds, skewRows, skewPercs, skewAvgsLabel, skewAvgs, skewAvgPercs))
+        }
+
+        val (rows, percs, skewRows, skewPercs, avgs, avgPercs, skewAvgs, skewAvgPercs) = language.measurementsIncremental(None)
+        val n = rows.length
+
+        val ids = language.sources.incremental.map(_.getName)
+
+        write.over(
+            suite.figuresDir / "incremental" / language.id / "measurements-parsing-incremental.tex",
+            createMeasurementsTable("Source", ids, rows, percs, "Average", avgs, avgPercs))
+        write.over(
+            suite.figuresDir / "incremental" / language.id / "measurements-parsing-incremental-skew.tex",
+            createMeasurementsTableSkew("Source", ids, skewRows, skewPercs, "Average", skewAvgs, skewAvgPercs))
+    }
+
+    val languageNames = languagesWithIncrementalSources.map(_.name)
+    val (rows, percs, skewRows, skewPercs) = getAllMeasurements(languagesWithIncrementalSources)
+
+    write.over(
+        suite.figuresDir / "incremental" / "measurements-parsing-incremental.tex",
+        createMeasurementsTable("Language", languageNames, rows, percs, "Average", rows.avgMaps, percs.avgMaps))
+    write.over(
+        suite.figuresDir / "incremental" / "measurements-parsing-incremental-skew.tex",
+        createMeasurementsTableSkew("Language", languageNames, skewRows, skewPercs, "Average", skewRows.avgMaps, skewPercs.avgMaps))
+    write.over(
+        suite.figuresDir / "incremental" / "measurements-parsing-incremental-summary.tex",
+        createMeasurementsTableSummary(languageNames,
+            rows.zip(skewRows).map(t => t._2 ++ t._1.filterKeys(_ == "parseNodesIrreusable")),
+            percs.zip(skewPercs).map(t => t._2 ++ t._1.filterKeys(_ == "parseNodesIrreusable"))))
+
+    val appendix =
+        s"""|\\begin{table}[ht]
+            |    \\centering
+            |    \\legend{Incremental parsing measurements for all languages.}
+            |    \\label{tbl:incremental-measurements-all}
+            |    \\maxsizebox*{\\linewidth}{\\textheight-2.2em}{%
+            |        \\input{\\generated/figures/incremental/measurements-parsing-incremental}\\hspace{0.5em}%
+            |        \\input{\\generated/figures/incremental/measurements-parsing-incremental-skew}%
+            |    }
+            |\\end{table}
+            |
+            |
+            |${languagesWithIncrementalSources.map { language =>
+                s"""|\\section{${language.name}}
+                    |
+                    |\\begin{table}[ht]
+                    |    \\centering
+                    |    \\legend{Incremental parsing measurements for the ${language.name} language.}
+                    |    \\label{tbl:incremental-measurements-${language.id}}
+                    |    \\maxsizebox*{\\linewidth}{\\textheight-2.2em}{%
+                    |        \\input{\\generated/figures/incremental/${language.id}/measurements-parsing-incremental}\\hspace{0.5em}%
+                    |        \\input{\\generated/figures/incremental/${language.id}/measurements-parsing-incremental-skew}%
+                    |    }
+                    |\\end{table}
+                    |
+                    |${language.sources.incremental.map { source =>
+                        s"""|\\begin{table}[ht]
+                            |    \\centering
+                            |    \\legend{Incremental parsing measurements for ${language.name} source ${source.getName}.}
+                            |    \\label{tbl:incremental-measurements-${language.id}-${source.id}}
+                            |    \\maxsizebox*{\\linewidth}{\\textheight-2.2em}{%
+                            |        \\input{\\generated/figures/incremental/${language.id}/${source.id}-parse/measurements-parsing-incremental}\\hspace{0.5em}%
+                            |        \\input{\\generated/figures/incremental/${language.id}/${source.id}-parse/measurements-parsing-incremental-skew}%
+                            |    }
+                            |\\end{table}""".stripMargin
+                     }.mkString("\n\n")}""".stripMargin
+             }.mkString("\n\n\n\\clearpage\n\n")}
+            |""".stripMargin
+    write.over(suite.figuresDir / "incremental" / "measurements-parsing-incremental-appendix.tex", appendix)
 }

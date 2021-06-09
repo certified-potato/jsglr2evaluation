@@ -159,5 +159,4 @@ suite.languages.foreach { language =>
             }
         }
     }
-    
 }
