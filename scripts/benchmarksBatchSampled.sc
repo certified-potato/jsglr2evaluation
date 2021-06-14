@@ -49,7 +49,7 @@ suite.languages.foreach { language =>
             mkdir ! (language.benchmarksDir / "batch-sampled")
 
             language.sourceFilesBatchSampled.foreach { file =>
-                benchmarkJSGLR("JSGLR2BenchmarkExternal", language.benchmarksDir / "batch-sampled" / s"${file.last.toString}.csv", file, "single", Map("implode" -> "true", "variant" -> "standard"))
+                benchmarkJSGLR("JSGLR2BenchmarkExternal", language.benchmarksDir / "batch-sampled" / s"${file.last.toString}.csv", file, "single", Map("implode" -> "true", "variant" -> "recovery"))
             }
         }
     }

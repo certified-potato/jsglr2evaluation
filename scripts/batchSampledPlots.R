@@ -5,17 +5,17 @@ batchSampledBenchmarksPlot <- function(inputFile, outputFile, dimension, unit) {
     return()
   
   data <- read.csv(file=inputFile, header=TRUE, sep=",")
-  data <- data[data$variant == "standard",]
+  data <- data[data$variant == "recovery",]
   languages <- unique(data$language)
 
   languageSymbols <- symbols[match(languages, languages)]
   plotSymbols <- symbols[match(data$language, languages)]
-  color <- colors[match(c("standard"), allVariants)]
+  color <- colors[match(c("recovery"), allVariants)]
   
   savePlot(function() {
     plot(data$size / 1000,
         data$score,
-        main=paste("Batch parsing", dimension, "vs. file size\n(JSGLR2 standard with imploding)"),
+        main=paste("Batch parsing", dimension, "vs. file size\n(JSGLR2 recovery with imploding)"),
         xlab="File size (1000 characters)",
         ylab=unit,
         pch=plotSymbols,
