@@ -1,4 +1,4 @@
-.PHONY: all pull-spoofax-releng pull-jsglr2 build-spoofax build-jsglr2 build-jsglr2-benchmark build-jsglr2-measure evaluation run
+.PHONY: all pull-spoofax-releng pull-jsglr2 build-spoofax build-jsglr2 build-jsglr2-benchmark build-jsglr2-measure evaluation
 
 
 # Configuration (using environment variables or arguments passed to make)
@@ -9,13 +9,9 @@ JSGLR_REMOTE_URL?=http://github.com/metaborg/jsglr
 JSGLR_VERSION?=develop/jsglr2
 EVALUATION_TARGET?=all
 
-all:
-	make run JSGLR_VERSION="no_measurements" 
-	make run JSGLR_VERSION="inlined_observers"
-	make run JSGLR_VERSION="with_privates"
-	make run JSGLR_VERSION="integrated_measurements"
 
-run: build-spoofax build-jsglr2-benchmark build-jsglr2-measure evaluation
+all: build-spoofax build-jsglr2-benchmark build-jsglr2-measure evaluation
+
 
 pull-spoofax-releng:
 	if [ ! -d data/spoofax/.git ]; then git clone --recursive https://github.com/metaborg/spoofax-releng.git data/spoofax; fi;
@@ -57,4 +53,4 @@ build-jsglr2-measure: pull-jsglr
 
 # Note that DATA_DIR and SPOOFAX_DIR are set as environment variables in Dockerfile
 evaluation:
-	cd scripts && make $(EVALUATION_TARGET) JSGLR2_NAME=$(JSGLR_VERSION)
+	cd scripts && make $(EVALUATION_TARGET)

@@ -1,6 +1,6 @@
 warmupIterations: 10
 benchmarkIterations: 10
-shrinkBatchSources: 30
+shrinkBatchSources: 3
 batchSamples: 10
 individualBatchSources: false
 variants:   

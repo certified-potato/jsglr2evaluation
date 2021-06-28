@@ -21,7 +21,6 @@ export JSGLR2EVALUATION_DATA_DIR=$(DATA_DIR)
 export JSGLR2EVALUATION_SPOOFAX_DIR=$(SPOOFAX_DIR)
 export JSGLR2EVALUATION_FIGURES_DIR=$(FIGURES_DIR)
 export JSGLR2EVALUATION_DEV=$(DEV)
-export JSGLR2_NAME=$(JSGLR2_NAME)
 
 
 all: languages sources preProcessing setupJars measurements benchmarks benchmarksBatchSampled memoryBenchmarks postProcessing figures
@@ -159,7 +158,7 @@ cleanArchive:
 	-rm $(DATA_DIR)/archive.tar.gz
 
 mail: archive
-	amm mail.sc 
+	amm mail.sc
 
 websiteRepo:
 	if [ ! -d $(DATA_DIR)/website/.git ]; then git clone https://$(GITHUB_TOKEN)@github.com/metaborg/jsglr2evaluation-site.git $(DATA_DIR)/website; fi

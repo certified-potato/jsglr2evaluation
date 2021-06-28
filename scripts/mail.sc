@@ -15,7 +15,7 @@ val email = sys.env.get("EMAIL").get
 val sendgrid = new SendGrid(sendgridToken)
 
 val from = new Email("j.denkers@tudelft.nl")
-val subject = "JSGLR2 Evaluation Results of " + sys.env.get("JSGLR2EVALUATION_FIGURES_DIR")
+val subject = "JSGLR2 Evaluation Results"
 val to = new Email(email)
 val content = new Content("text/plain", " ")
 val mail = new Mail()
